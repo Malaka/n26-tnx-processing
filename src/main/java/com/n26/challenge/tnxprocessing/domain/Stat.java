@@ -1,7 +1,9 @@
 package com.n26.challenge.tnxprocessing.domain;
 
+import com.google.common.base.Objects;
+
 /**
- * Stats for last 60 seconds
+ * Stats for a given time duration
  *
  * @author: malaka
  * Date: 5/20/17
@@ -18,7 +20,6 @@ public class Stat {
 	private Double min;
 
 	private Long count;
-
 
 	public static Stat of(Double sum, Double avg, Double max, Double min, Long count) {
 		return new Stat(sum, avg, max, min, count);
@@ -50,6 +51,23 @@ public class Stat {
 
 	public Long getCount() {
 		return count;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof Stat)) return false;
+		Stat stat = (Stat) o;
+		return Objects.equal(sum, stat.sum) &&
+			Objects.equal(avg, stat.avg) &&
+			Objects.equal(max, stat.max) &&
+			Objects.equal(min, stat.min) &&
+			Objects.equal(count, stat.count);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(sum, avg, max, min, count);
 	}
 
 	@Override

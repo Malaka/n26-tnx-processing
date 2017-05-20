@@ -1,16 +1,18 @@
 package com.n26.challenge.tnxprocessing.service;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.n26.challenge.tnxprocessing.domain.Stat;
 import com.n26.challenge.tnxprocessing.domain.Transaction;
-import com.n26.challenge.tnxprocessing.repo.TransactionRepo;
 
 /**
  * Transaction service impl
@@ -24,34 +26,40 @@ public class TransactionServiceImpl implements TransactionService {
 
 	private static final Logger log = LoggerFactory.getLogger(TransactionServiceImpl.class);
 
-	@Autowired
-	private TransactionRepo transactionRepo;
+	/*@Autowired
+	private TransactionRepo transactionRepo;*/
+
+	private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10);
 
 	@Value("${n26.stat.retain.duration.sec}")
 	private String statDuration;
 
 	@Override
-	public Boolean recordTnx(Transaction transaction) {
+	public Boolean recordTnx(Transaction tnx) {
 		DateTime now = DateTime.now();
 		Integer statWindow = Integer.valueOf(statDuration);
-		Duration duration = Duration.millis(now.getMillis() - transaction.getTimestamp());
+		Duration duration = Duration.millis(now.getMillis() - tnx.getTimestamp());
 		log.debug("tnx duration from now is {}", duration);
 
 		boolean status;
-		if (duration.compareTo(Duration.standardSeconds(statWindow)) > 0) {
-			log.info("transaction {} is older than {} seconds, ignoring", statWindow, transaction);
+		Duration statDuration = Duration.standardSeconds(statWindow);
+		if (duration.compareTo(statDuration) > 0) {
+			log.info("tnx {} is older than {} seconds, Ignoring the record", tnx, statWindow);
 			status = false;
 		} else {
-			log.info("adding the {} to DB for include in stat", transaction);
-			transactionRepo.save(transaction);
+
+			Duration ttl = statDuration.minus(duration.getMillis());
+			//transactionRepo.save(tnx);
+			StatBuilder.getInstance().add(tnx.getAmount());
+			scheduledExecutorService.schedule(ItemRemover.of(tnx.getAmount()), ttl.getMillis(), TimeUnit.MILLISECONDS);
+			log.info("adding the {} to stat with expiration={}", tnx, ttl);
 			status = true;
 		}
-
 		return status;
 	}
 
 	@Override
 	public Stat getStat() {
-		return Stat.of(1d, 1d, 1d, 1d, 1L);
+		return StatBuilder.getInstance().getStat();
 	}
 }
