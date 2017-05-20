@@ -26,9 +26,6 @@ public class TransactionServiceImpl implements TransactionService {
 
 	private static final Logger log = LoggerFactory.getLogger(TransactionServiceImpl.class);
 
-	/*@Autowired
-	private TransactionRepo transactionRepo;*/
-
 	private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10);
 
 	@Value("${n26.stat.retain.duration.sec}")
@@ -47,11 +44,11 @@ public class TransactionServiceImpl implements TransactionService {
 			log.info("tnx {} is older than {} seconds, Ignoring the record", tnx, statWindow);
 			status = false;
 		} else {
-
 			Duration ttl = statDuration.minus(duration.getMillis());
-			//transactionRepo.save(tnx);
-			StatBuilder.getInstance().add(tnx.getAmount());
-			scheduledExecutorService.schedule(ItemRemover.of(tnx.getAmount()), ttl.getMillis(), TimeUnit.MILLISECONDS);
+			StatBuilder statBuilder = StatBuilder.getInstance();
+			statBuilder.add(tnx.getAmount());
+			ItemRemover removalTask = ItemRemover.of(statBuilder, tnx.getAmount());
+			scheduledExecutorService.schedule(removalTask, ttl.getMillis(), TimeUnit.MILLISECONDS);
 			log.info("adding the {} to stat with expiration={}", tnx, ttl);
 			status = true;
 		}

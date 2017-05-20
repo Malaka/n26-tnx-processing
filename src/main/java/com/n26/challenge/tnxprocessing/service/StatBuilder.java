@@ -69,11 +69,11 @@ public class StatBuilder {
 		if (remove) {
 			this.sum = this.sum.add(itemBD.negate());
 			this.count--;
-			boolean lastItem = count.compareTo(0L) == 0;
+			boolean lastItem = (count == 0);
 			if (itemBD.compareTo(max) == 0 || itemBD.compareTo(min) == 0) {
 				Collections.sort(data);
-				this.min = lastItem ? BigDecimal.ZERO : data.getFirst();
-				this.max = lastItem ? BigDecimal.ZERO : data.getLast();
+				this.min = lastItem ? BigDecimal.valueOf(Double.MAX_VALUE) : data.getFirst();
+				this.max = lastItem ? BigDecimal.valueOf(Double.MIN_VALUE) : data.getLast();
 			}
 			this.avg = lastItem ? BigDecimal.ZERO : sum.divide(BigDecimal.valueOf(count), BigDecimal.ROUND_HALF_EVEN);
 		}
