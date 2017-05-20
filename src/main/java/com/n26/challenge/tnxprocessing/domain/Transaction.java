@@ -1,11 +1,14 @@
 package com.n26.challenge.tnxprocessing.domain;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.io.Serializable;
 
 import javax.validation.constraints.NotNull;
 
 /**
  * Represent transaction entry to the system
+ *
  * @author: malaka
  * Date: 5/20/17
  * Time: 2:38 AM
@@ -13,9 +16,11 @@ import javax.validation.constraints.NotNull;
 public class Transaction implements Serializable {
 
 	@NotNull
+	@ApiModelProperty(notes = "Transaction amount", required = true)
 	private Double amount;
 
 	@NotNull
+	@ApiModelProperty(notes = "Transaction time in epoch in millis in UTC time zone", required = true)
 	private Long timestamp;
 
 	public static Transaction of(Double amount, Long timestamp) {

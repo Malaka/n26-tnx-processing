@@ -48,6 +48,7 @@ public class TnxProcessingController {
 
 	/**
 	 * Transaction stat endpoint
+	 *
 	 * @return
 	 */
 	@RequestMapping(value = "/statistics", method = RequestMethod.GET)
